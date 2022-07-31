@@ -42,7 +42,7 @@ TEST(StarterTest, SampleTest) {
 }
 
 /** Test that matrix initialization works as expected */
-TEST(StarterTest, DISABLED_InitializationTest) {
+TEST(StarterTest, InitializationTest) {
   auto matrix = std::make_unique<RowMatrix<int>>(2, 2);
 
   // Source contains too few elements
@@ -68,7 +68,7 @@ TEST(StarterTest, DISABLED_InitializationTest) {
   }
 }
 
-TEST(StarterTest, DISABLED_ElementAccessTest) {
+TEST(StarterTest, ElementAccessTest) {
   auto matrix = std::make_unique<RowMatrix<int>>(2, 2);
 
   std::vector<int> source(4);
@@ -115,7 +115,7 @@ TEST(StarterTest, DISABLED_ElementAccessTest) {
 }
 
 /** Test that matrix addition works as expected */
-TEST(StarterTest, DISABLED_AdditionTest) {
+TEST(StarterTest, AdditionTest) {
   auto matrix0 = std::make_unique<RowMatrix<int>>(3, 3);
 
   const std::vector<int> source0{1, 4, 2, 5, 2, -1, 0, 3, 1};
@@ -155,7 +155,7 @@ TEST(StarterTest, DISABLED_AdditionTest) {
 }
 
 /** Test that matrix multiplication works as expected */
-TEST(StarterTest, DISABLED_MultiplicationTest) {
+TEST(StarterTest, MultiplicationTest) {
   const std::vector<int> source0{1, 2, 3, 4, 5, 6};
   auto matrix0 = std::make_unique<RowMatrix<int>>(2, 3);
   matrix0->FillFrom(source0);
@@ -190,4 +190,40 @@ TEST(StarterTest, DISABLED_MultiplicationTest) {
     }
   }
 }
+
+TEST(StarterTest, GEMMTest) {
+  // Multiply
+  const std::vector<int> source0{1, 2, 3, 4, 5, 6};
+  auto matrix0 = std::make_unique<RowMatrix<int>>(2, 3);
+  matrix0->FillFrom(source0);
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 3; j++) {
+      EXPECT_EQ(source0[i * 3 + j], matrix0->GetElement(i, j));
+    }
+  }
+
+  const std::vector<int> source1{-2, 1, -2, 2, 2, 3};
+  auto matrix1 = std::make_unique<RowMatrix<int>>(3, 2);
+  matrix1->FillFrom(source1);
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 2; j++) {
+      EXPECT_EQ(source1[i * 2 + j], matrix1->GetElement(i, j));
+    }
+  }
+
+  const std::vector<int> source2{2, -12, 8, -30};
+  std::unique_ptr<RowMatrix<int>> mat3_ptr{new RowMatrix<int>(2, 2)};
+  auto matrix2 = std::make_unique<RowMatrix<int>>(2, 2);
+  matrix2->FillFrom(source2);
+
+  const std::vector<int> source3{2, 2, 2, 2};
+
+  auto gemm = RowMatrixOperations<int>::GEMM(matrix0.get(), matrix1.get(), matrix2.get());
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      EXPECT_EQ(source3[i * 2 + j], gemm->GetElement(i, j));
+    }
+  }
+}
+
 }  // namespace bustub

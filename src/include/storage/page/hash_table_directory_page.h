@@ -14,6 +14,7 @@
 
 #include <cassert>
 #include <climits>
+#include <cmath>
 #include <cstdlib>
 #include <string>
 

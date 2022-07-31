@@ -12,10 +12,13 @@
 
 #pragma once
 
+#include <bitset>
+#include <cassert>
 #include <utility>
 #include <vector>
 
 #include "common/config.h"
+#include "common/logger.h"
 #include "storage/index/int_comparator.h"
 #include "storage/page/hash_table_page_defs.h"
 
@@ -137,12 +140,49 @@ class HashTableBucketPage {
    */
   void PrintBucket();
 
+  inline void SetOccupiedBit(uint32_t bucket_idx, uint8_t b) {
+    // assert(b == 0 || b == 1);
+    char bit_char = occupied_[bucket_idx / 8];
+    uint8_t bit_index = bucket_idx % 8;
+
+    if (b == 0) {
+      bit_char &= ~(1 << (7 - bit_index));
+    } else {
+      bit_char |= (1 << (7 - bit_index));
+    }
+    occupied_[bucket_idx / 8] = bit_char;
+  }
+
+  inline uint8_t GetOccupiedBit(uint32_t bucket_idx) const {
+    return ((occupied_[bucket_idx / 8] >> (7 - (bucket_idx % 8))) & 1);
+  }
+
+  inline void SetReadableBit(uint32_t bucket_idx, uint8_t b) {
+    // assert(b == 0 || b == 1);
+    char bit_char = readable_[bucket_idx / 8];
+    uint8_t bit_index = bucket_idx % 8;
+
+    if (b == 0) {
+      bit_char &= ~(1 << (7 - bit_index));
+    } else {
+      bit_char |= (1 << (7 - bit_index));
+    }
+    readable_[bucket_idx / 8] = bit_char;
+  }
+
+  inline uint8_t GetReadableBit(uint32_t bucket_idx) const {
+    return ((readable_[bucket_idx / 8] >> (7 - (bucket_idx % 8))) & 1);
+  }
+
  private:
   //  For more on BUCKET_ARRAY_SIZE see storage/page/hash_table_page_defs.h
   char occupied_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
   // 0 if tombstone/brand new (never occupied), 1 otherwise.
   char readable_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
   MappingType array_[0];
+
+  uint32_t next_occupied_index_{0};
+  uint32_t readable_remaining_{0};
 };
 
 }  // namespace bustub

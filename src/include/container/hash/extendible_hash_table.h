@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <queue>
 #include <string>
 #include <vector>

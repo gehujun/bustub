@@ -27,6 +27,14 @@ HASH_TABLE_TYPE::ExtendibleHashTable(const std::string &name, BufferPoolManager 
                                      const KeyComparator &comparator, HashFunction<KeyType> hash_fn)
     : buffer_pool_manager_(buffer_pool_manager), comparator_(comparator), hash_fn_(std::move(hash_fn)) {
   //  implement me!
+
+  // set hash table directory page and page id
+  page_id_t directory_page_id = INVALID_PAGE_ID;
+  auto directory_page =
+      reinterpret_cast<HashTableDirectoryPage *>(buffer_pool_manager_->NewPage(&directory_page_id, nullptr)->GetData());
+
+  directory_page->SetPageId(directory_page_id);
+  directory_page_id_ = directory_page_id;
 }
 
 /*****************************************************************************
@@ -46,7 +54,7 @@ uint32_t HASH_TABLE_TYPE::Hash(KeyType key) {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 inline uint32_t HASH_TABLE_TYPE::KeyToDirectoryIndex(KeyType key, HashTableDirectoryPage *dir_page) {
-  return 0;
+  return Hash(key) & static_cast<uint32_t>(pow(2, dir_page->GetGlobalDepth()) - 1);
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
@@ -56,12 +64,16 @@ inline uint32_t HASH_TABLE_TYPE::KeyToPageId(KeyType key, HashTableDirectoryPage
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 HashTableDirectoryPage *HASH_TABLE_TYPE::FetchDirectoryPage() {
-  return nullptr;
+  auto directory_page =
+      reinterpret_cast<HashTableDirectoryPage *>(buffer_pool_manager_->FetchPage(directory_page_id_)->GetData());
+  return directory_page;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 HASH_TABLE_BUCKET_TYPE *HASH_TABLE_TYPE::FetchBucketPage(page_id_t bucket_page_id) {
-  return nullptr;
+  auto bucket_page =
+      reinterpret_cast<HASH_TABLE_BUCKET_TYPE *>(buffer_pool_manager_->FetchPage(bucket_page_id)->GetData());
+  return bucket_page;
 }
 
 /*****************************************************************************
@@ -77,6 +89,13 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
+  auto dir_page = FetchDirectoryPage();
+  uint32_t bucket_id = KeyToDirectoryIndex(key, dir_page);
+  auto bucket_page = FetchBucketPage(dir_page->GetBucketPageId(bucket_id));
+
+  // if or not duplicate KV pair in this bucket
+  bucket_page->Insert(key, value, comparator_);
+
   return false;
 }
 

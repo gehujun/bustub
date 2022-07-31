@@ -14,6 +14,7 @@
 
 #include <list>
 #include <mutex>  // NOLINT
+#include <unordered_map>
 #include <vector>
 
 #include "buffer/replacer.h"
@@ -24,6 +25,7 @@ namespace bustub {
 /**
  * LRUReplacer implements the Least Recently Used replacement policy.
  */
+
 class LRUReplacer : public Replacer {
  public:
   /**
@@ -47,6 +49,11 @@ class LRUReplacer : public Replacer {
 
  private:
   // TODO(student): implement me!
+  // need set a max_frame_size; if unpin > size return false
+  size_t max_pages_;
+  size_t num_pages_;
+  std::unordered_map<frame_id_t, std::list<frame_id_t>::iterator> frames_;
+  std::list<frame_id_t> lists_;
 };
 
 }  // namespace bustub
